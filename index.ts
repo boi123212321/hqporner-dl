@@ -36,8 +36,11 @@ async function domFromUrl(url: string) {
       process.exit(1);
     }
 
+    const videoName = $("h1.main-h1").text();
+    console.log(`Found video: ${videoName}`);
     const splits = iframeUrl.split("/").filter(Boolean);
     const videoId = splits[splits.length - 1];
+    console.log(`ID: ${videoId}`);
 
     const $iframe = await domFromUrl(`https:${iframeUrl}`);
 
@@ -50,7 +53,7 @@ async function domFromUrl(url: string) {
       const matchedStr = matches[0];
       const cleanUrl = `https:${matchedStr.slice(6, -1)}`;
 
-      const filePath = resolve(baseFolder, `${videoId}-${argv.quality}p.mp4`);
+      const filePath = resolve(baseFolder, `${videoName}-${argv.quality}p.mp4`);
 
       await downloadFile(cleanUrl, filePath);
     } else {
