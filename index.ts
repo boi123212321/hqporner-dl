@@ -13,14 +13,14 @@ if (!urls.length) {
 }
 
 const baseFolder = argv.folder;
-console.log(`Base folder: ${resolve(baseFolder)}`);
+console.error(`Base folder: ${resolve(baseFolder)}`);
 
 if (!existsSync(baseFolder)) {
   mkdirSync(baseFolder, { recursive: true });
 }
 
 async function domFromUrl(url: string) {
-  console.log("Getting " + url);
+  console.error("Getting " + url);
   const { data } = await Axios.get(url);
   return cheerio.load(data);
 }
@@ -29,18 +29,22 @@ async function domFromUrl(url: string) {
   for (const url of urls) {
     const $ = await domFromUrl(url);
 
-    const iframeUrl = $("iframe").toArray()[0]?.attribs.src;
+    const iframeUrl = $("#playerWrapper iframe").toArray()[0]?.attribs.src;
 
     if (!iframeUrl) {
       console.error("Iframe URL not found");
       process.exit(1);
     }
 
-    const videoName = $("h1.main-h1").text();
-    console.log(`Found video: ${videoName}`);
+    const videoName = $(
+      new URL(url).hostname.startsWith("m.") ? "h1" : "h1.main-h1"
+    )
+      .text()
+      .trim();
+    console.error(`Found video: ${videoName}`);
     const splits = iframeUrl.split("/").filter(Boolean);
     const videoId = splits[splits.length - 1];
-    console.log(`ID: ${videoId}`);
+    console.error(`ID: ${videoId}`);
 
     const $iframe = await domFromUrl(`https:${iframeUrl}`);
 
@@ -53,9 +57,29 @@ async function domFromUrl(url: string) {
       const matchedStr = matches[0];
       const cleanUrl = `https:${matchedStr.slice(6, -1)}`;
 
-      const filePath = resolve(baseFolder, `${videoName}-${argv.quality}p.mp4`);
-
-      await downloadFile(cleanUrl, filePath);
+      if (argv.dry) {
+        const res = await Axios.head(cleanUrl);
+        const size = parseInt(res.headers["content-length"]);
+        console.log(
+          JSON.stringify(
+            {
+              id: videoId,
+              name: videoName,
+              url: cleanUrl,
+              size,
+              sizeFormatted: `${Math.round(size / 1000 / 1000)} MB`,
+            },
+            null,
+            2
+          )
+        );
+      } else {
+        const filePath = resolve(
+          baseFolder,
+          `${videoName}-${argv.quality}p.mp4`
+        );
+        await downloadFile(cleanUrl, filePath);
+      }
     } else {
       console.error(`Quality ${argv.quality}p not found for ${videoId}`);
     }

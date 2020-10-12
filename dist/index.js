@@ -24,13 +24,13 @@ if (!urls.length) {
     process.exit(1);
 }
 const baseFolder = args_1.default.folder;
-console.log(`Base folder: ${path_1.resolve(baseFolder)}`);
+console.error(`Base folder: ${path_1.resolve(baseFolder)}`);
 if (!fs_1.existsSync(baseFolder)) {
     fs_1.mkdirSync(baseFolder, { recursive: true });
 }
 function domFromUrl(url) {
     return __awaiter(this, void 0, void 0, function* () {
-        console.log("Getting " + url);
+        console.error("Getting " + url);
         const { data } = yield axios_1.default.get(url);
         return cheerio_1.default.load(data);
     });
@@ -39,24 +39,39 @@ function domFromUrl(url) {
     var _a;
     for (const url of urls) {
         const $ = yield domFromUrl(url);
-        const iframeUrl = (_a = $("iframe").toArray()[0]) === null || _a === void 0 ? void 0 : _a.attribs.src;
+        const iframeUrl = (_a = $("#playerWrapper iframe").toArray()[0]) === null || _a === void 0 ? void 0 : _a.attribs.src;
         if (!iframeUrl) {
             console.error("Iframe URL not found");
             process.exit(1);
         }
-        const videoName = $("h1.main-h1").text();
-        console.log(`Found video: ${videoName}`);
+        const videoName = $(new URL(url).hostname.startsWith("m.") ? "h1" : "h1.main-h1")
+            .text()
+            .trim();
+        console.error(`Found video: ${videoName}`);
         const splits = iframeUrl.split("/").filter(Boolean);
         const videoId = splits[splits.length - 1];
-        console.log(`ID: ${videoId}`);
+        console.error(`ID: ${videoId}`);
         const $iframe = yield domFromUrl(`https:${iframeUrl}`);
         const qualityRegex = new RegExp(`href=['"][a-zA-Z\/0-9.]+${args_1.default.quality}\.mp4['"]`);
         const matches = $iframe.xml().match(qualityRegex);
         if (matches && matches.length) {
             const matchedStr = matches[0];
             const cleanUrl = `https:${matchedStr.slice(6, -1)}`;
-            const filePath = path_1.resolve(baseFolder, `${videoName}-${args_1.default.quality}p.mp4`);
-            yield download_1.downloadFile(cleanUrl, filePath);
+            if (args_1.default.dry) {
+                const res = yield axios_1.default.head(cleanUrl);
+                const size = parseInt(res.headers["content-length"]);
+                console.log(JSON.stringify({
+                    id: videoId,
+                    name: videoName,
+                    url: cleanUrl,
+                    size,
+                    sizeFormatted: `${Math.round(size / 1000 / 1000)} MB`,
+                }, null, 2));
+            }
+            else {
+                const filePath = path_1.resolve(baseFolder, `${videoName}-${args_1.default.quality}p.mp4`);
+                yield download_1.downloadFile(cleanUrl, filePath);
+            }
         }
         else {
             console.error(`Quality ${args_1.default.quality}p not found for ${videoId}`);

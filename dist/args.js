@@ -12,6 +12,10 @@ exports.default = yargs
         alias: "q",
         default: "1080",
     },
+    dry: {
+        type: "boolean",
+        default: false,
+    },
 })
     .check((argv) => {
     if (!["360", "720", "1080", "2160"].includes(argv.quality)) {

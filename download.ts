@@ -19,7 +19,7 @@ export async function downloadFile(url: string, file: string) {
     {
       format: `Fetching |${cyan(
         "{bar}"
-      )}| {percentage}% | {loaded}/{totalSize}MB | Speed: {speed}kB/s`,
+      )}| {percentage}% | {loaded}/{totalSize} MB | Speed: {speed}kB/s`,
     },
     Presets.shades_classic
   );
@@ -40,7 +40,7 @@ export async function downloadFile(url: string, file: string) {
 
   const writer = createWriteStream(file);
 
-  const totalSize = response.headers["content-length"];
+  const totalSize = parseInt(response.headers["content-length"]);
   let loaded = 0;
 
   response.data.on("data", (data: Buffer) => {
