@@ -35,9 +35,9 @@ function domFromUrl(url) {
         return cheerio_1.default.load(data);
     });
 }
-(() => __awaiter(void 0, void 0, void 0, function* () {
+function processUrl(url) {
     var _a;
-    for (const url of urls) {
+    return __awaiter(this, void 0, void 0, function* () {
         const $ = yield domFromUrl(url);
         const iframeUrl = (_a = $("#playerWrapper iframe").toArray()[0]) === null || _a === void 0 ? void 0 : _a.attribs.src;
         if (!iframeUrl) {
@@ -76,6 +76,21 @@ function domFromUrl(url) {
         else {
             console.error(`Quality ${args_1.default.quality}p not found for ${videoId}`);
         }
+    });
+}
+(() => __awaiter(void 0, void 0, void 0, function* () {
+    const skipped = [];
+    for (const url of urls) {
+        try {
+            yield processUrl(url);
+        }
+        catch (error) {
+            console.error(`Error on ${url}: ${error.message}`);
+            skipped.push(url);
+        }
+    }
+    if (skipped.length) {
+        console.error("Skipped", skipped);
     }
     process.exit(0);
 }))();
