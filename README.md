@@ -3,6 +3,8 @@ Download videos from HQPorner
 
 ## Usage
 
+You'll need the Node.js runtime (https://nodejs.org/en/)
+
 #### Install dependencies
 ```
 npm i
