@@ -85,7 +85,12 @@ function processUrl(url) {
             yield processUrl(url);
         }
         catch (error) {
-            console.error(`Error on ${url}: ${error.message}`);
+            if (error instanceof Error) {
+                console.error(`Error on ${url}: ${error.message}`);
+            }
+            else {
+                console.error(error);
+            }
             skipped.push(url);
         }
     }
