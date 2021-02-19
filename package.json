@@ -21,6 +21,7 @@
     "chalk": "^4.1.0",
     "cheerio": "^1.0.0-rc.3",
     "cli-progress": "^3.8.2",
+    "dotenv": "^8.2.0",
     "yargs": "^16.0.3"
   }
 }
